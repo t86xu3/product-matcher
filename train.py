@@ -22,9 +22,16 @@ from torch.utils.data import DataLoader
 
 
 def train(data_path: str, output_path: str, epochs: int = 3, batch_size: int = 16, eval_split: float = 0.2):
-    # 1. 載入標記資料
-    data = json.load(open(data_path))
-    print(f"標記資料: {len(data)} 組（同款 {sum(1 for d in data if d['label']==1)}、不同 {sum(1 for d in data if d['label']==0)}）")
+    # 1. 載入標記資料（自動去重）
+    raw = json.load(open(data_path))
+    seen = set()
+    data = []
+    for d in raw:
+        key = (d["shopee_name"], d["coupang_name"])
+        if key not in seen:
+            seen.add(key)
+            data.append(d)
+    print(f"標記資料: {len(data)} 組（去重前 {len(raw)}，同款 {sum(1 for d in data if d['label']==1)}、不同 {sum(1 for d in data if d['label']==0)}）")
 
     examples = [
         InputExample(texts=[d["shopee_name"], d["coupang_name"]], label=float(d["label"]))
