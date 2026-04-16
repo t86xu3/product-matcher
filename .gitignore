@@ -8,3 +8,4 @@ data/product_labels.json
 data/label_pairs.json
 data/product-matcher-model/
 data/*.db
+checkpoints/
