@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商品配對標記工具</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, sans-serif; background: #f8fafc; color: #1e293b; }
+.header { background: white; border-bottom: 1px solid #e2e8f0; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+.header h1 { font-size: 18px; }
+.stats { font-size: 13px; color: #64748b; }
+.stats span { font-weight: 700; color: #f97316; }
+
+.card { max-width: 800px; margin: 20px auto; background: white; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; }
+.keyword { background: #f1f5f9; padding: 8px 16px; font-size: 12px; color: #64748b; }
+.pair { display: flex; gap: 0; }
+.side { flex: 1; padding: 16px; }
+.side:first-child { border-right: 1px solid #e2e8f0; }
+.platform { font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+.platform.shopee { color: #f97316; }
+.platform.coupang { color: #dc2626; }
+.product-img { width: 100%; aspect-ratio: 1; object-fit: contain; background: #f8fafc; border-radius: 8px; margin-bottom: 8px; }
+.product-name { font-size: 13px; line-height: 1.5; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.price { font-size: 18px; font-weight: 700; color: #1e293b; }
+
+.actions { display: flex; gap: 8px; padding: 12px 16px; background: #f8fafc; border-top: 1px solid #e2e8f0; }
+.btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.btn:active { transform: scale(0.97); }
+.btn-yes { background: #22c55e; color: white; }
+.btn-yes:hover { background: #16a34a; }
+.btn-no { background: #ef4444; color: white; }
+.btn-no:hover { background: #dc2626; }
+.btn-skip { background: #e2e8f0; color: #64748b; }
+.btn-skip:hover { background: #cbd5e1; }
+
+.done { text-align: center; padding: 60px 20px; }
+.done h2 { margin-bottom: 12px; }
+.export-btn { background: #f97316; color: white; border: none; padding: 12px 32px; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 16px; }
+.export-btn:hover { background: #ea580c; }
+
+.progress { height: 3px; background: #e2e8f0; }
+.progress-bar { height: 100%; background: #f97316; transition: width 0.3s; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>商品配對標記</h1>
+  <div class="stats">
+    已標記 <span id="count">0</span> / <span id="total">0</span>
+    &nbsp;|&nbsp; 同款 <span id="yesCount" style="color:#22c55e">0</span>
+    不同 <span id="noCount" style="color:#ef4444">0</span>
+    &nbsp;|&nbsp; <a href="#" onclick="resetAll();return false" style="color:#94a3b8;font-size:12px">重頭開始</a>
+  </div>
+</div>
+<div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+
+<div id="cardContainer"></div>
+
+<script>
+let pairs = [];
+let current = 0;
+let labels = [];
+
+async function init() {
+  const resp = await fetch('../data/label_pairs.json');
+  pairs = await resp.json();
+  document.getElementById('total').textContent = pairs.length;
+
+  // 載入已有的標記
+  const saved = localStorage.getItem('product_labels');
+  if (saved) {
+    labels = JSON.parse(saved);
+    current = labels.length;
+  }
+
+  updateStats();
+  showCurrent();
+}
+
+function showCurrent() {
+  const container = document.getElementById('cardContainer');
+
+  if (current >= pairs.length) {
+    container.innerHTML = `
+      <div class="done">
+        <h2>標記完成！</h2>
+        <p>共標記 ${labels.length} 組（同款 ${labels.filter(l=>l.label===1).length}、不同 ${labels.filter(l=>l.label===0).length}）</p>
+        <button class="export-btn" onclick="exportData()">匯出 JSON</button>
+        <p style="margin-top:12px;font-size:12px;color:#94a3b8">匯出後把檔案傳給 Claude 訓練模型</p>
+      </div>`;
+    return;
+  }
+
+  const p = pairs[current];
+  container.innerHTML = `
+    <div class="card">
+      <div class="keyword">#${current + 1} — 搜尋：${p.keyword} ${p.shopee_brand ? '| 品牌：' + p.shopee_brand : ''}</div>
+      <div class="pair">
+        <div class="side">
+          <div class="platform shopee">蝦皮</div>
+          <img class="product-img" src="${p.shopee.image}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22><text y=%221%22 font-size=%221%22>🖼️</text></svg>'">
+          <div class="product-name">${p.shopee.name}</div>
+          <div class="price">$${p.shopee.price.toLocaleString()}</div>
+        </div>
+        <div class="side">
+          <div class="platform coupang">酷澎</div>
+          <img class="product-img" src="${p.coupang.image}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22><text y=%221%22 font-size=%221%22>🖼️</text></svg>'">
+          <div class="product-name">${p.coupang.name}</div>
+          <div class="price">$${p.coupang.price.toLocaleString()}</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-back" onclick="goBack()" style="flex:0.5;background:#94a3b8;color:white">⬅️ 上一步</button>
+        <button class="btn btn-yes" onclick="label(1)">✅ 同款商品</button>
+        <button class="btn btn-no" onclick="label(0)">❌ 不同商品</button>
+        <button class="btn btn-skip" onclick="label(-1)">⏭️ 跳過</button>
+      </div>
+    </div>`;
+}
+
+function label(value) {
+  if (value !== -1) {
+    labels.push({
+      id: pairs[current].id,
+      shopee_name: pairs[current].shopee.name,
+      coupang_name: pairs[current].coupang.name,
+      label: value,
+    });
+  }
+  current++;
+  localStorage.setItem('product_labels', JSON.stringify(labels));
+  updateStats();
+  showCurrent();
+}
+
+function updateStats() {
+  document.getElementById('count').textContent = labels.length;
+  document.getElementById('yesCount').textContent = labels.filter(l => l.label === 1).length;
+  document.getElementById('noCount').textContent = labels.filter(l => l.label === 0).length;
+  document.getElementById('progressBar').style.width = (current / pairs.length * 100) + '%';
+}
+
+function goBack() {
+  if (current <= 0) return;
+  current--;
+  // 移除最後一筆標記（如果有的話）
+  if (labels.length > 0 && labels[labels.length - 1].id === pairs[current].id) {
+    labels.pop();
+  }
+  localStorage.setItem('product_labels', JSON.stringify(labels));
+  updateStats();
+  showCurrent();
+}
+
+function resetAll() {
+  if (!confirm('確定要清除所有標記重頭開始嗎？')) return;
+  labels = [];
+  current = 0;
+  localStorage.removeItem('product_labels');
+  updateStats();
+  showCurrent();
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(labels, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'product_labels.json';
+  a.click();
+}
+
+// 鍵盤快捷鍵
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'y' || e.key === '1') label(1);
+  if (e.key === 'n' || e.key === '0') label(0);
+  if (e.key === 's' || e.key === ' ') label(-1);
+  if (e.key === 'z' || e.key === 'Backspace') goBack();
+});
+
+init();
+</script>
+</body>
+</html>

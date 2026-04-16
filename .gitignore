@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.env
+venv/
+
+# 私有資料（不開源）
+data/product_labels.json
+data/label_pairs.json
+data/product-matcher-model/
+data/*.db
