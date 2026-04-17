@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.1.1] — 2026-04-17
+
+重審工具鏈 + 6 筆標記修正 + 訓練測試貼齊新定義。
+
+### 工具
+- `review_gen.py`: 產出可疑標記審核清單（join label_pairs.json 拿圖片/價格）
+- `review_apply.py`: 套用審核修正到 product_labels.json（自動備份）
+- `labeler/review.html`: 重審介面（顯示原標 + 模型分數、翻面/維持原標/上一步）
+
+### 修正
+- 翻面 6 筆標記（5 筆 CeraVe 容量差異、1 筆 Laneige 氣墊 Neo 版本差異）
+- `train.py` 測試 case 貼齊新同款定義：CeraVe 不同容量 = 不同款、新增 R50i vs R60i 同系列不同型號 case
+- CLAUDE.md / README.md 的 http.server 啟動指令（原本 `--directory labeler` 會導致 `fetch('../data/...')` 404）
+
+### 指標
+- 可疑標記：63 → 36（-43%）
+- eval Spearman: 0.71 → 0.703（小樣本修正對 99 筆 eval split 影響有限）
+- eval Pearson: 0.80 → 0.823
+- 標記分布：141/355 同/不同 → 130/365（翻 6 筆後）
+
 ## [0.1.0] — 2026-04-16
 
 首版模型 + 完整工具鏈。

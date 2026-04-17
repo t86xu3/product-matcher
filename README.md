@@ -54,12 +54,21 @@ pip install sentence-transformers datasets accelerate
 
 ### 3. 標記
 
-```bash
-# 啟動任何 HTTP server
-python -m http.server 8080 --directory labeler
+**同款定義（標記標準）：**
+- ✅ 同款：完全相同的型號，不同賣場/賣家販售
+- ❌ 不同款：同型號但不同容量/規格（如 473ml vs 236ml）
+- ❌ 不同款：同系列但不同型號（如 R50i vs R60i）
+- ❌ 不同款：相似但有版本差異（如一般版 vs NC 降噪版）
 
-# 打開瀏覽器
-open http://localhost:8080/labeler.html
+```bash
+# 在專案根目錄啟動 HTTP server（才能讀到 ../data/）
+python3 -m http.server 8080
+
+# 標記新資料
+open http://localhost:8080/labeler/labeler.html
+
+# 重審可疑標記（需先跑 python3 review_gen.py）
+open http://localhost:8080/labeler/review.html
 ```
 
 快捷鍵：

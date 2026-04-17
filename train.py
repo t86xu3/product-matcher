@@ -81,7 +81,8 @@ def train(data_path: str, output_path: str, epochs: int = 3, batch_size: int = 1
     print("\n快速測試：")
     tests = [
         ("Soundcore R50i NC 主動降噪真無線藍牙耳機", "soundcore R50i NC主動降噪真無線藍牙耳機", True),
-        ("CeraVe 溫和泡沫潔膚露 473ml", "CeraVe 適樂膚 溫和泡沫潔膚露 355ml", True),
+        ("CeraVe 溫和泡沫潔膚露 473ml", "CeraVe 適樂膚 溫和泡沫潔膚露 355ml", False),  # 同型號不同容量 = 不同款
+        ("Soundcore R50i 真無線藍牙耳機", "Soundcore R60i 真無線藍牙耳機", False),  # 同系列不同型號 = 不同款
         ("Dyson V8 無線吸塵器", "LG PuriCare 空氣清淨機", False),
         ("Canon PGI-750XL 墨水匣", "Canon PGI-750XL+CLI-751XL 原廠墨水匣", True),
         ("Adidas Ultraboost 5 慢跑鞋", "Nike Air Max 270 運動鞋", False),

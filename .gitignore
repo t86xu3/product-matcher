@@ -9,3 +9,8 @@ data/label_pairs.json
 data/product-matcher-model/
 data/*.db
 checkpoints/
+
+# 審核流程臨時檔
+data/suspicious_review.json
+data/review_corrections.json
+data/product_labels.backup-*.json
