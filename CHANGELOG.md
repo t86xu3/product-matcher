@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.1.2] — 2026-04-17
+
+資料量從 495 翻倍到 994 筆，Pearson 創新高 0.831。
+
+### 工具
+- `gen_pairs.py`: 從 price-compare DB 抽 N 筆新配對（避開 label_pairs.json 已有組合，支援 --limit / --per-keyword）
+- `merge_batch.py`: 合併批次標記到主資料集（自動備份 label_pairs.json 與 product_labels.json）
+- `labeler/batch.html`: 批次標記介面（獨立 localStorage key、頂部同款定義提醒）
+
+### 資料
+- 新增 499 筆人工標記（68 同款、431 不同），id 範圍 724–1222
+- 標記分布：130/365 → 193/801（同款率 26% → 20%）
+
+### 指標
+- eval Pearson: 0.823 → **0.831**（歷史最佳）
+- eval Spearman: 0.703 → 0.640（199 筆 split 擴大後含更多新 case）
+- 不同分數 max: 0.821 → 0.734（分類更肯定）
+- R50i vs R60i 測試仍失敗（0.75）— 訓練資料「同系列不同型號」樣本不足
+
+### 結論
+擴增資料是突破 0.8 Spearman 的必經之路，當前瓶頸是樣本量（994 → 2000+），不是審核品質。
+
 ## [0.1.1] — 2026-04-17
 
 重審工具鏈 + 6 筆標記修正 + 訓練測試貼齊新定義。

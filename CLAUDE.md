@@ -11,11 +11,12 @@
 | 框架 | sentence-transformers |
 | 語言 | Python 3.11+ |
 
-## 當前狀態（v0.1.1）
+## 當前狀態（v0.1.2）
 
-- 標記資料：495 組（130 同款 / 365 不同款）
-- Spearman：0.703（eval），Pearson 0.823
-- 可疑標記：36 筆（前一輪審 63 筆、修正 6 筆後重訓練）
+- 標記資料：994 組（193 同款 / 801 不同款）— 擴增 500 筆新配對
+- Pearson：0.831（eval，歷史最佳）
+- Spearman：0.640（eval，199 筆 split 擴大後含更多新 case）
+- 可疑標記：94 筆（9.5%）
 
 ## 同款定義
 
@@ -26,8 +27,9 @@
 
 ## 最優先待辦
 
-- [ ] 重新審核剩下 36 筆可疑標記（前一輪審完 63 修 6）→ 重訓練
-- [ ] 繼續標記到 2000 筆（Spearman 卡在 0.7，需更多樣本突破）
+- [ ] 繼續擴充到 2000 筆（現在 994，分界間距 -0.693 有重疊，資料量是主要瓶頸）
+- [ ] 「同系列不同型號」案例覆蓋不足（R50i vs R60i 測試仍判同款），下批需有意識補充
+- [ ] 資料量 2000+ 後再做一輪重審（目前 94 筆可疑不急）
 
 ## 常用指令
 
@@ -63,8 +65,11 @@ python3 predict.py
 | `check.py` | 品質檢查，印出可疑標記 |
 | `review_gen.py` | 產出可疑標記審核清單（含圖片/價格） |
 | `review_apply.py` | 套用 review.html 匯出的修正到 product_labels.json |
-| `labeler/labeler.html` | 瀏覽器標記工具（新資料） |
+| `gen_pairs.py` | 從 price-compare DB 抽新一批候選配對 |
+| `merge_batch.py` | 把批次標記結果合併進主資料集 |
+| `labeler/labeler.html` | 瀏覽器標記工具（初版） |
 | `labeler/review.html` | 瀏覽器重審工具（可疑標記） |
+| `labeler/batch.html` | 瀏覽器批次標記工具（新一批 500 筆） |
 | `data/product_labels.json` | 標記結果（私有） |
 | `data/label_pairs.json` | 候選配對資料（含圖片，私有） |
 | `data/suspicious_review.json` | 審核清單（review_gen.py 產出） |
