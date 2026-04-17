@@ -13,9 +13,12 @@ checkpoints/
 # 審核流程臨時檔
 data/suspicious_review.json
 data/review_corrections.json
+data/outlier_corrections.json
+data/overview_corrections.json
 data/product_labels.backup-*.json
 data/label_pairs.backup-*.json
 
 # 批次擴充流程臨時檔
 data/new_pairs.json
 data/batch_labels.json
+data/batch_labels_round_*.json

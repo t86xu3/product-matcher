@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>可疑標記一覽</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, sans-serif; background: #f8fafc; color: #1e293b; padding-bottom: 80px; }
+
+.header { background: white; border-bottom: 1px solid #e2e8f0; padding: 16px 24px; position: sticky; top: 0; z-index: 20; }
+.header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.header h1 { font-size: 18px; }
+.summary { font-size: 13px; color: #64748b; }
+.summary strong { color: #1e293b; }
+.summary .flip { color: #2563eb; }
+.summary .keep { color: #94a3b8; }
+
+.filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.filter-btn { padding: 6px 12px; border: 1px solid #cbd5e1; background: white; border-radius: 20px; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+.filter-btn:hover { background: #f1f5f9; }
+.filter-btn.active { background: #1e293b; color: white; border-color: #1e293b; }
+
+.cards { max-width: 900px; margin: 16px auto; padding: 0 16px; display: grid; gap: 12px; }
+
+.card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; transition: opacity 0.2s; }
+.card[data-hidden="1"] { display: none; }
+.card[data-decision="flip"] { border-color: #2563eb; box-shadow: 0 0 0 2px #2563eb33; }
+.card[data-decision="keep"] { opacity: 0.5; }
+
+.card-top { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #f1f5f9; font-size: 12px; color: #64748b; }
+.card-id { font-family: monospace; }
+.card-score { font-family: monospace; font-weight: 700; }
+
+.banner { padding: 8px 12px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
+.banner.same { background: #dcfce7; color: #166534; }
+.banner.diff { background: #fee2e2; color: #991b1b; }
+
+.pair { display: flex; }
+.side { flex: 1; padding: 12px; }
+.side:first-child { border-right: 1px solid #e2e8f0; }
+.platform { font-size: 10px; font-weight: 700; margin-bottom: 6px; }
+.platform.shopee { color: #f97316; }
+.platform.coupang { color: #dc2626; }
+.product-img { width: 100%; aspect-ratio: 1; object-fit: contain; background: #f8fafc; border-radius: 6px; margin-bottom: 6px; }
+.product-name { font-size: 12px; line-height: 1.4; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.price { font-size: 14px; font-weight: 700; }
+
+.actions { display: flex; gap: 6px; padding: 8px 12px; background: #f8fafc; border-top: 1px solid #e2e8f0; }
+.btn { flex: 1; padding: 8px; border: none; border-radius: 6px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+.btn:active { transform: scale(0.97); }
+.btn.btn-flip { background: #2563eb; color: white; }
+.btn.btn-flip:hover { background: #1d4ed8; }
+.btn.btn-flip.active { background: #1e40af; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+.btn.btn-keep { background: #e2e8f0; color: #64748b; }
+.btn.btn-keep:hover { background: #cbd5e1; }
+.btn.btn-keep.active { background: #94a3b8; color: white; }
+
+.floating { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 24px; border-radius: 100px; display: flex; gap: 12px; align-items: center; box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 30; }
+.floating-count { font-size: 14px; font-weight: 700; }
+.floating-btn { background: #f97316; color: white; border: none; padding: 8px 16px; border-radius: 100px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.floating-btn:hover { background: #ea580c; }
+.floating-btn:disabled { background: #64748b; cursor: not-allowed; }
+.reset-btn { background: transparent; color: #94a3b8; border: 1px solid #64748b; padding: 6px 12px; border-radius: 100px; font-size: 12px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <h1>可疑標記一覽</h1>
+    <div class="summary">
+      共 <strong id="total">0</strong> 筆
+      &nbsp;·&nbsp;翻面 <span class="flip" id="flipCount">0</span>
+      &nbsp;·&nbsp;維持 <span class="keep" id="keepCount">0</span>
+    </div>
+  </div>
+  <div class="filters">
+    <button class="filter-btn active" data-filter="all">全部</button>
+    <button class="filter-btn" data-filter="same-low">標同款但低分</button>
+    <button class="filter-btn" data-filter="diff-high">標不同但高分</button>
+    <button class="filter-btn" data-filter="flipped">已翻面</button>
+    <button class="filter-btn" data-filter="pending">未處理</button>
+  </div>
+</div>
+
+<div class="cards" id="cards"></div>
+
+<div class="floating">
+  <span class="floating-count">已選 <span id="flipCountFloat">0</span> 筆翻面</span>
+  <button class="floating-btn" id="exportBtn" disabled>匯出修正</button>
+  <button class="reset-btn" onclick="resetAll()">清空</button>
+</div>
+
+<script>
+const STORAGE_KEY = 'overview_decisions';
+let pairs = [];
+let decisions = {};  // id → 'flip' | 'keep' | undefined
+let currentFilter = 'all';
+
+async function init() {
+  try {
+    const resp = await fetch('../data/suspicious_review.json');
+    pairs = await resp.json();
+  } catch (e) {
+    document.getElementById('cards').innerHTML = '<p style="padding:40px;text-align:center;color:#94a3b8">載入失敗，先跑 python3 review_gen.py</p>';
+    return;
+  }
+
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) decisions = JSON.parse(saved);
+
+  render();
+  setupFilters();
+}
+
+function render() {
+  const container = document.getElementById('cards');
+  container.innerHTML = pairs.map((p, i) => cardHTML(p, i)).join('');
+  updateStats();
+  applyFilter();
+}
+
+function cardHTML(p, i) {
+  const origLabel = p.original_label === 1 ? '同款' : '不同';
+  const origIcon = p.original_label === 1 ? '✅' : '❌';
+  const origClass = p.original_label === 1 ? 'same' : 'diff';
+  const targetLabel = p.original_label === 1 ? '不同' : '同款';
+  const decision = decisions[p.id];
+
+  return `
+    <div class="card" data-id="${p.id}" data-original="${p.original_label}" data-score="${p.model_score}" data-decision="${decision || ''}">
+      <div class="card-top">
+        <span class="card-id">#${i+1}  id=${p.id}  ${p.keyword || ''}</span>
+        <span class="card-score">model: ${p.model_score.toFixed(3)}</span>
+      </div>
+      <div class="banner ${origClass}">
+        <span>你原本標：${origIcon} <strong>${origLabel}</strong></span>
+        <span style="color:#64748b">${p.reason || ''}</span>
+      </div>
+      <div class="pair">
+        <div class="side">
+          <div class="platform shopee">蝦皮</div>
+          <img class="product-img" src="${p.shopee.image}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22><text y=%221%22 font-size=%221%22>🖼️</text></svg>'">
+          <div class="product-name">${p.shopee.name}</div>
+          <div class="price">$${p.shopee.price.toLocaleString()}</div>
+        </div>
+        <div class="side">
+          <div class="platform coupang">酷澎</div>
+          <img class="product-img" src="${p.coupang.image}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22><text y=%221%22 font-size=%221%22>🖼️</text></svg>'">
+          <div class="product-name">${p.coupang.name}</div>
+          <div class="price">$${p.coupang.price.toLocaleString()}</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-flip ${decision==='flip' ? 'active' : ''}" onclick="decide(${p.id}, 'flip')">🔄 改成「${targetLabel}」</button>
+        <button class="btn btn-keep ${decision==='keep' ? 'active' : ''}" onclick="decide(${p.id}, 'keep')">保持原標</button>
+      </div>
+    </div>
+  `;
+}
+
+function decide(id, action) {
+  if (decisions[id] === action) {
+    delete decisions[id]; // toggle off
+  } else {
+    decisions[id] = action;
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(decisions));
+
+  const card = document.querySelector(`[data-id="${id}"]`);
+  card.dataset.decision = decisions[id] || '';
+  card.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  if (decisions[id]) {
+    const btn = card.querySelector(decisions[id] === 'flip' ? '.btn-flip' : '.btn-keep');
+    btn.classList.add('active');
+  }
+  updateStats();
+  applyFilter();
+}
+
+function updateStats() {
+  document.getElementById('total').textContent = pairs.length;
+  const flipN = Object.values(decisions).filter(d => d === 'flip').length;
+  const keepN = Object.values(decisions).filter(d => d === 'keep').length;
+  document.getElementById('flipCount').textContent = flipN;
+  document.getElementById('keepCount').textContent = keepN;
+  document.getElementById('flipCountFloat').textContent = flipN;
+  document.getElementById('exportBtn').disabled = flipN === 0;
+}
+
+function setupFilters() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.filter;
+      applyFilter();
+    });
+  });
+}
+
+function applyFilter() {
+  document.querySelectorAll('.card').forEach(card => {
+    const original = parseInt(card.dataset.original);
+    const score = parseFloat(card.dataset.score);
+    const decision = card.dataset.decision;
+
+    let show = true;
+    if (currentFilter === 'same-low')  show = (original === 1 && score < 0.7);
+    if (currentFilter === 'diff-high') show = (original === 0 && score > 0.3);
+    if (currentFilter === 'flipped')   show = (decision === 'flip');
+    if (currentFilter === 'pending')   show = (!decision);
+
+    card.dataset.hidden = show ? '0' : '1';
+  });
+}
+
+function resetAll() {
+  if (!confirm('確定要清空所有已選決定嗎？')) return;
+  decisions = {};
+  localStorage.removeItem(STORAGE_KEY);
+  render();
+}
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const corrections = [];
+  for (const p of pairs) {
+    if (decisions[p.id] === 'flip') {
+      const newLabel = p.original_label === 1 ? 0 : 1;
+      corrections.push({ id: p.id, label: newLabel });
+    }
+  }
+  const blob = new Blob([JSON.stringify(corrections, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'overview_corrections.json';
+  a.click();
+});
+
+init();
+</script>
+</body>
+</html>

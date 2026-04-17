@@ -83,7 +83,14 @@ body { font-family: -apple-system, sans-serif; background: #f8fafc; color: #1e29
 </div>
 
 <script>
-const STORAGE_KEY = 'batch_labels_v2';
+const urlParams = new URLSearchParams(window.location.search);
+const ROUND = urlParams.get('round') || '2';  // 預設 round 2（保持向後相容）
+const STORAGE_KEY = ROUND === '2' ? 'batch_labels_v2' : `batch_labels_round_${ROUND}`;
+const DOWNLOAD_NAME = ROUND === '2' ? 'batch_labels.json' : `batch_labels_round_${ROUND}.json`;
+document.title = `商品配對標記 — round ${ROUND}`;
+const h1 = document.querySelector('.header h1');
+if (h1) h1.textContent = `商品配對標記 — round ${ROUND}`;
+
 let pairs = [];
 let current = 0;
 let labels = [];
@@ -207,7 +214,7 @@ function exportData() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'batch_labels.json';
+  a.download = DOWNLOAD_NAME;
   a.click();
 }
 

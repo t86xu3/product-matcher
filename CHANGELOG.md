@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.1.3] — 2026-04-17
+
+資料量 995 → 1993 筆 + 42 筆 outlier 修正 → 可疑標記降到歷史新低 3.1%。
+
+### 工具
+- `labeler/overview.html`: 一覽式重審（所有可疑一頁 render + 篩選 + 批次選翻面）
+- `labeler/batch.html`: 支援 `?round=N` URL param，獨立 localStorage key + 下載檔名
+- `train.py`: 新增 `--device` 參數（cpu/mps/cuda，解 Mac MPS OOM 可切 CPU）
+
+### 資料
+- 新增 998 筆人工標記（id 1224–2223）— 一次補到 1993 筆目標
+- outlier 修正 42 筆（5 筆極端 + 37 筆一覽審核）
+- 現行分布：299 同款 / 1693 不同款
+
+### 指標
+- **可疑標記：94 → 62 筆（9.5% → 3.1%）** — v0.1.0 以來最低
+- **分界間距：-0.693 → -0.701**（outlier 修正後 v0.1.3 再次拉近）
+- 同款 avg 0.776 → 0.853 / 不同 avg 0.057 → 0.010（兩群更分開）
+- 不同 max 0.734 → 0.797（一些邊界 case 模型仍不確定）
+- 測試 5/6 → 4/6（R50i vs R60i、CeraVe 容量差異還是判同款）
+
+### 工程
+- Mac MPS OOM 踩坑 — 1993 筆訓練 18 GiB 上限爆了 3 次：
+  - batch_size 16/8 都爆（other allocations 14 GiB 吃掉空間）
+  - 最終用 `PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0` + 關 app 釋放記憶體搞定
+  - train.py 加 `--device` 參數方便未來切 CPU
+
+### 結論
+上線準備度：可以整合進 price-compare。3.1% 可疑 + 分界間距 -0.701 已達生產可用水準，剩下的 bad case 多數是「同系列不同型號」類，等線上遇到再累積資料。
+
 ## [0.1.2] — 2026-04-17
 
 資料量從 495 翻倍到 994 筆，Pearson 創新高 0.831。

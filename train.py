@@ -21,7 +21,7 @@ from sentence_transformers.util import cos_sim
 from torch.utils.data import DataLoader
 
 
-def train(data_path: str, output_path: str, epochs: int = 3, batch_size: int = 16, eval_split: float = 0.2):
+def train(data_path: str, output_path: str, epochs: int = 3, batch_size: int = 16, eval_split: float = 0.2, device: str | None = None):
     # 1. 載入標記資料（自動去重）
     raw = json.load(open(data_path))
     seen = set()
@@ -47,8 +47,8 @@ def train(data_path: str, output_path: str, epochs: int = 3, batch_size: int = 1
     print(f"訓練: {len(train_ex)}, 驗證: {len(eval_ex)}")
 
     # 2. 載入 base model
-    print("載入 base model: paraphrase-multilingual-MiniLM-L12-v2...")
-    model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+    print(f"載入 base model: paraphrase-multilingual-MiniLM-L12-v2（device={device or 'auto'}）")
+    model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2", device=device)
 
     # 3. 訓練
     loader = DataLoader(train_ex, shuffle=True, batch_size=batch_size)
@@ -107,6 +107,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", default="data/product-matcher-model", help="模型輸出路徑")
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--batch-size", type=int, default=16)
+    parser.add_argument("--device", default=None, help="cpu / mps / cuda，預設自動")
     args = parser.parse_args()
 
-    train(args.data, args.output, args.epochs, args.batch_size)
+    train(args.data, args.output, args.epochs, args.batch_size, device=args.device)

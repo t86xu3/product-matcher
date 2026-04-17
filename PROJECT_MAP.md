@@ -1,6 +1,6 @@
 # product-matcher PROJECT MAP
 
-最後更新：2026-04-17（v0.1.2）
+最後更新：2026-04-17（v0.1.3）
 
 ## 專案目標
 
@@ -10,11 +10,9 @@
 
 ## 🔴 最優先待辦
 
-- [ ] **繼續擴充到 2000 筆**（現在 994，分界間距 -0.693 是主要瓶頸）
-  - 啟動：`python3 gen_pairs.py && python3 -m http.server 8080`
-  - 瀏覽：http://localhost:8080/labeler/batch.html
-  - 審完下載 `batch_labels.json` → `python3 merge_batch.py` → `python3 train.py`
-- [ ] 下批有意識補充「同系列不同型號」案例（R50i vs R60i 測試仍失敗）
+- [ ] **整合進 price-compare 比價流程**（`backend/core/product_matcher.py` 已有 hook，需確認模型檔部署方式）
+- [ ] 下次擴充標記時有意識補「同系列不同型號」案例（R50i vs R60i、CeraVe 473/355 測試仍失敗）
+- [ ] 3000+ 筆後再做一輪重審（現在 62 筆可疑不急）
 
 ---
 
@@ -22,14 +20,12 @@
 
 | 項目 | 數值 |
 |------|------|
-| 標記資料量 | 994 組（193 同款 / 801 不同款） |
-| Spearman 相關係數 | 0.640（eval，199 筆 split） |
-| Pearson 相關係數 | 0.831（eval，歷史最佳） |
-| 可疑標記數 | 94 筆（9.5%） |
-| 目標 Spearman | 0.85+ |
-| 同款分數分布 | avg 0.776（min 0.041、max 0.982） |
-| 不同分數分布 | avg 0.057（min -0.213、max 0.734） |
-| 分界間距 | -0.693（有重疊，需更多資料） |
+| 標記資料量 | 1992 組（299 同款 / 1693 不同款） |
+| 可疑標記數 | **62 筆（3.1%）** — v0.1.0 以來最低 |
+| 目標 | 3000+ 筆、可疑 < 2% |
+| 同款分數分布 | avg 0.853（min 0.096、max 0.989） |
+| 不同分數分布 | avg 0.010（min -0.205、max 0.797） |
+| 分界間距 | -0.701（outlier 修正後拉回）|
 
 ---
 
@@ -66,8 +62,9 @@
 | `gen_pairs.py` | 從 price-compare DB 抽新一批候選配對 |
 | `merge_batch.py` | 合併批次標記到主資料集（自動備份） |
 | `labeler/labeler.html` | 瀏覽器標記工具（初版） |
-| `labeler/review.html` | 瀏覽器重審工具（可疑標記） |
-| `labeler/batch.html` | 瀏覽器批次標記工具（新一批） |
+| `labeler/review.html` | 瀏覽器重審工具（可疑標記，逐筆） |
+| `labeler/overview.html` | 瀏覽器一覽式重審（全部 render + 篩選 + 批次翻面） |
+| `labeler/batch.html` | 瀏覽器批次標記工具（新一批，支援 ?round=N） |
 | `data/label_pairs.json` | 候選配對（私有） |
 | `data/product_labels.json` | 標記結果（私有） |
 | `data/suspicious_review.json` | 審核清單（臨時） |
@@ -79,7 +76,7 @@
 
 ## 下一步路線圖
 
-1. 🔴 繼續擴充到 2000 筆（現在 994，分界間距 -0.693 是瓶頸）
-2. 下批補充「同系列不同型號」案例（R50i vs R60i 仍誤判）
-3. 資料量 2000+ 後再做一輪重審 + 重訓練
-4. Spearman 穩定 0.80+ 後，整合進 shopee-compare / price-compare 比價流程
+1. 🔴 **整合進 price-compare** — 可疑 3.1%、分界間距 -0.701，已達上線水準
+2. 觀察線上實際表現，收集 bad case
+3. 資料量 3000+ 時再做一輪重審 + 重訓練
+4. 下批擴充時補「同系列不同型號」case
